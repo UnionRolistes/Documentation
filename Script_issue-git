@@ -1,0 +1,67 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using Octokit;
+
+namespace IssueSorter
+{
+    public class IssueSorter
+    {
+        private readonly string _githubToken;
+        private readonly string _repositoryOwner;
+        private readonly string _repositoryName;
+
+        public IssueSorter(string githubToken, string repositoryOwner, string repositoryName)
+        {
+            _githubToken = githubToken;
+            _repositoryOwner = repositoryOwner;
+            _repositoryName = repositoryName;
+        }
+
+        public async Task SortIssues()
+        {
+            var client = new GitHubClient(new ProductHeaderValue("IssueSorter"));
+            var tokenAuth = new Credentials(_githubToken);
+            client.Credentials = tokenAuth;
+
+            // Récupérer toutes les issues du dépôt
+            var issues = await client.Issue.GetAllForRepository(_repositoryOwner, _repositoryName);
+
+            // Parcourir chaque issue
+            foreach (var issue in issues)
+            {
+                // Définir les étiquettes à ajouter et à supprimer pour cette issue
+                var labelsToAdd = new List<string>();
+                var labelsToRemove = new List<string>();
+
+                // Si l'issue n'a pas d'étiquette de taille, ajouter une étiquette "size: unknown"
+                if (!issue.Labels.Any(l => l.Name.StartsWith("size:")))
+                {
+                    labelsToAdd.Add("size: unknown");
+                }
+			// Si l'issue n'a pas d'étiquette de priorité, ajouter une étiquette "priority: unknown"
+				if (!issue.Labels.Any(l => l.Name.StartsWith("priority:")))
+				{
+					labelsToAdd.Add("priority: unknown");
+				}
+				
+				// Si l'issue a un titre qui commence par "bug:", ajouter l'étiquette "type: bug" et "priority: high"
+				if (issue.Title.StartsWith("bug:"))
+				{
+					labelsToAdd.Add("type: bug");
+					labelsToAdd.Add("priority: high");
+				}
+				
+				// Si l'issue a un titre qui commence par "feature:", ajouter l'étiquette "type: feature"
+				if (issue.Title.StartsWith("feature:"))
+				{
+					labelsToAdd.Add("type: feature");
+				}
+				
+				// Mettre à jour les étiquettes de l'issue
+				await client.Issue.Labels.AddToIssue(_repositoryOwner, _repositoryName, issue.Number, labelsToAdd);
+				await client.Issue.Labels.RemoveFromIssue(_repositoryOwner, _repositoryName, issue.Number, labelsToRemove);
+			}
+		}
+	}
+}
