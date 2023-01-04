@@ -26,7 +26,10 @@ Licence.md
 ### Usage
 #### .
 ---
+
+## Contribution et dev
+=> Dev.md 
+
 ### ToDo
-Todo.md
-(ou renvoyer vers dev.md où la todo et cahier des charge sera afficher, en cas de séparation user/contributeur)
+Todo lien vers le projet "Todolist"
 -------------
